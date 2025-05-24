@@ -39,7 +39,7 @@ Java_com_pixpark_gpupixel_GPUPixelSourceImage_nativeCreateFromBuffer(
     jbyteArray data) {
   jbyte* bytes = env->GetByteArrayElements(data, NULL);
 
-  auto source_image = SourceImage::CreateFromBuffer(
+  auto source_image = SourceImage::CreateFromPixelData(
       width, height, channel_count, (const unsigned char*)bytes);
 
   env->ReleaseByteArrayElements(data, bytes, 0);
@@ -69,7 +69,7 @@ Java_com_pixpark_gpupixel_GPUPixelSourceImage_nativeCreateFromBitmap(
     return 0;
   }
 
-  auto source_image = SourceImage::CreateFromBuffer(
+  auto source_image = SourceImage::CreateFromPixelData(
       info.width, info.height, 4, (const unsigned char*)pixels);
 
   AndroidBitmap_unlockPixels(env, bitmap);

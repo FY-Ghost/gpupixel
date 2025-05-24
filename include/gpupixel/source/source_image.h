@@ -16,11 +16,17 @@ class GPUPIXEL_API SourceImage : public Source {
  public:
   static std::shared_ptr<SourceImage> Create(const std::string name);
 
-  static std::shared_ptr<SourceImage> CreateFromBuffer(
+  // 从已解码的像素数据创建SourceImage
+  static std::shared_ptr<SourceImage> CreateFromPixelData(
       int width,
       int height,
       int channel_count,
       const unsigned char* pixels);
+
+  // 从编码的图像数据创建SourceImage（内部使用stbi_load_from_memory解码）
+  static std::shared_ptr<SourceImage> CreateFromEncodedData(
+      const uint8_t* image_data,
+      size_t data_size);
 
   ~SourceImage() {};
 

@@ -14,6 +14,8 @@
 #include "gpupixel/filter/gaussian_blur_filter.h"
 
 namespace gpupixel {
+class SourceImage;
+
 class GPUPIXEL_API BeautyFaceFilter : public FilterGroup {
  public:
   static std::shared_ptr<BeautyFaceFilter> Create();
@@ -27,6 +29,11 @@ class GPUPIXEL_API BeautyFaceFilter : public FilterGroup {
   void SetBlurAlpha(float blurAlpha);
   void SetWhite(float white);
   void SetRadius(float sigma);
+
+  // 设置查找表图像的接口
+  // lookup_images 顺序：[0]gray, [1]original, [2]skin, [3]custom
+  void SetLookupImages(
+      const std::vector<std::shared_ptr<SourceImage>>& lookup_images);
 
   virtual void SetInputFramebuffer(
       std::shared_ptr<GPUPixelFramebuffer> framebuffer,

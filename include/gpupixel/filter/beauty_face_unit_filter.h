@@ -24,6 +24,11 @@ class GPUPIXEL_API BeautyFaceUnitFilter : public Filter {
   void SetBlurAlpha(float blurAlpha);
   void SetWhite(float white);
 
+  // 设置查找表图像的接口
+  // lookup_images 顺序：[0]gray, [1]original, [2]skin, [3]custom
+  void SetLookupImages(
+      const std::vector<std::shared_ptr<SourceImage>>& lookup_images);
+
  protected:
   BeautyFaceUnitFilter();
 

@@ -306,15 +306,27 @@ bool BeautyFaceUnitFilter::Init() {
     return false;
   }
 
-  auto path = Util::GetResourcePath() / "res";
-  gray_image_ = SourceImage::Create((path / "lookup_gray.png").string());
-  original_image_ = SourceImage::Create((path / "lookup_origin.png").string());
-  skin_image_ = SourceImage::Create((path / "lookup_skin.png").string());
-  custom_image_ = SourceImage::Create((path / "lookup_light.png").string());
+  // 不再在这里直接创建 SourceImage，而是等待外部通过 SetLookupImages 传入
   return true;
 }
 
+void BeautyFaceUnitFilter::SetLookupImages(
+    const std::vector<std::shared_ptr<SourceImage>>& lookup_images) {
+  if (lookup_images.size() >= 4) {
+    gray_image_ = lookup_images[0];      // gray
+    original_image_ = lookup_images[1];  // original
+    skin_image_ = lookup_images[2];      // skin
+    custom_image_ = lookup_images[3];    // custom
+  }
+}
+
 bool BeautyFaceUnitFilter::DoRender(bool updateSinks) {
+  // 检查查找表图像是否已设置
+  if (!gray_image_ || !original_image_ || !skin_image_ || !custom_image_) {
+    // 如果查找表图像未设置，则直接透传原图
+    return Source::DoRender(updateSinks);
+  }
+
   static const float imageVertices[] = {
       -1.0f, -1.0f, 1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 1.0f,
   };

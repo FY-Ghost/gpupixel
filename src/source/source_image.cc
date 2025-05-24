@@ -21,7 +21,7 @@
 
 namespace gpupixel {
 
-std::shared_ptr<SourceImage> SourceImage::CreateFromBuffer(
+std::shared_ptr<SourceImage> SourceImage::CreateFromPixelData(
     int width,
     int height,
     int channel_count,
@@ -30,6 +30,34 @@ std::shared_ptr<SourceImage> SourceImage::CreateFromBuffer(
   gpupixel::GPUPixelContext::GetInstance()->SyncRunWithContext(
       [&] { sourceImage->Init(width, height, channel_count, pixels); });
   return sourceImage;
+}
+
+std::shared_ptr<SourceImage> SourceImage::CreateFromEncodedData(
+    const uint8_t* image_data,
+    size_t data_size) {
+  if (!image_data || data_size == 0) {
+    LOG_ERROR("SourceImage: Invalid image data or size");
+    return nullptr;
+  }
+
+  int width, height, channels;
+  unsigned char* decoded_data =
+      stbi_load_from_memory(image_data, static_cast<int>(data_size), &width,
+                            &height, &channels, 4  // 强制转换为 RGBA
+      );
+
+  if (!decoded_data) {
+    LOG_ERROR("stbi_load_from_memory failed to decode image data");
+    return nullptr;
+  }
+
+  LOG_INFO("create source image from buffer: {}x{}, channels: {}", width,
+           height, channels);
+
+  auto image = SourceImage::CreateFromPixelData(width, height, 4, decoded_data);
+  stbi_image_free(decoded_data);
+
+  return image;
 }
 
 std::shared_ptr<SourceImage> SourceImage::Create(const std::string path) {
@@ -48,7 +76,7 @@ std::shared_ptr<SourceImage> SourceImage::Create(const std::string path) {
     return nullptr;
   }
   auto image =
-      SourceImage::CreateFromBuffer(width, height, channel_count, data);
+      SourceImage::CreateFromPixelData(width, height, channel_count, data);
   stbi_image_free(data);
   return image;
 }

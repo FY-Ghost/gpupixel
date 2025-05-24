@@ -84,4 +84,11 @@ void BeautyFaceFilter::SetRadius(float radius) {
   box_blur_filter_->SetRadius(radius);
   box_high_pass_filter_->SetRadius(radius);
 }
+
+void BeautyFaceFilter::SetLookupImages(
+    const std::vector<std::shared_ptr<SourceImage>>& lookup_images) {
+  if (beauty_face_filter_) {
+    beauty_face_filter_->SetLookupImages(lookup_images);
+  }
+}
 }  // namespace gpupixel
