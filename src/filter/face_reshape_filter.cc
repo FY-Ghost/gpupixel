@@ -121,6 +121,70 @@ const std::string kGPUPixelThinFaceFragmentShaderString = R"(
  uniform float thinFaceDelta;
  uniform float bigEyeDelta;
  
+ // 基础矩形区域像素平移函数
+ vec2 rectangleTranslate(vec2 textureCoord, vec2 rectTopLeft, vec2 rectBottomRight, vec2 translateOffset) {
+     // 检查当前像素是否在矩形框内
+     bool inRect = (textureCoord.x >= rectTopLeft.x && textureCoord.x <= rectBottomRight.x) &&
+                   (textureCoord.y >= rectTopLeft.y && textureCoord.y <= rectBottomRight.y);
+     
+     if (inRect) {
+         // 在矩形内，应用平移偏移
+         return textureCoord + translateOffset;
+     } else {
+         // 在矩形外，保持原坐标
+         return textureCoord;
+     }
+ }
+
+ // 带平滑边缘的矩形区域像素平移函数  
+ vec2 rectangleTranslateSmooth(vec2 textureCoord, vec2 rectCenter, vec2 rectSize, vec2 translateOffset, float smoothEdge) {
+     // 计算到矩形中心的相对坐标
+     vec2 relativePos = abs(textureCoord - rectCenter);
+     vec2 halfSize = rectSize * 0.5;
+     
+     // 计算距离矩形边界的距离
+     vec2 distToEdge = halfSize - relativePos;
+     float minDistToEdge = min(distToEdge.x, distToEdge.y);
+     
+     // 计算权重：在矩形内部权重为1，边缘平滑过渡
+     float weight = smoothstep(0.0, smoothEdge, minDistToEdge);
+     weight = clamp(weight, 0.0, 1.0);
+     
+     // 应用加权的平移偏移
+     return textureCoord + translateOffset * weight;
+ }
+
+ // 使用4个顶点定义的任意四边形平移函数
+ vec2 quadTranslate(vec2 textureCoord, vec2 p1, vec2 p2, vec2 p3, vec2 p4, vec2 translateOffset) {
+     // 简化的点在四边形内判断（适用于凸四边形）
+     // 使用叉积判断点是否在四边形内部
+     vec2 v1 = p2 - p1;
+     vec2 v2 = p3 - p2; 
+     vec2 v3 = p4 - p3;
+     vec2 v4 = p1 - p4;
+     
+     vec2 vp1 = textureCoord - p1;
+     vec2 vp2 = textureCoord - p2;
+     vec2 vp3 = textureCoord - p3;
+     vec2 vp4 = textureCoord - p4;
+     
+     // 计算叉积
+     float cross1 = v1.x * vp1.y - v1.y * vp1.x;
+     float cross2 = v2.x * vp2.y - v2.y * vp2.x;
+     float cross3 = v3.x * vp3.y - v3.y * vp3.x;
+     float cross4 = v4.x * vp4.y - v4.y * vp4.x;
+     
+     // 检查所有叉积是否同号（在四边形内）
+     bool inQuad = (cross1 >= 0.0 && cross2 >= 0.0 && cross3 >= 0.0 && cross4 >= 0.0) ||
+                   (cross1 <= 0.0 && cross2 <= 0.0 && cross3 <= 0.0 && cross4 <= 0.0);
+     
+     if (inQuad) {
+         return textureCoord + translateOffset;
+     } else {
+         return textureCoord;
+     }
+ }
+ 
  vec2 enlargeEye(vec2 textureCoord, vec2 originPosition, float radius, float delta) {
 
      float weight = distance(vec2(textureCoord.x, textureCoord.y / aspectRatio), vec2(originPosition.x, originPosition.y / aspectRatio)) / radius;
@@ -332,6 +396,38 @@ const std::string kGPUPixelThinFaceFragmentShaderString = R"(
      return currentCoordinate;
  }
 
+   // 嘴型（大小）
+  vec2 zuiXing(vec2 currentCoordinate, int faceIndex) {
+     int baseIndex = faceIndex * 222;
+      vec2 faceIndexs[6];
+      faceIndexs[0] = vec2(80., 81.);
+      faceIndexs[1] = vec2(81., 80.);
+      faceIndexs[2] = vec2(82., 83.);
+      faceIndexs[3] = vec2(83., 82.);
+      faceIndexs[4] = vec2(47., 51.);
+      faceIndexs[5] = vec2(51., 47.);
+     
+     for(int i = 0; i < 6; i++)
+     {
+         int originIndex = int(faceIndexs[i].x);
+         int targetIndex = int(faceIndexs[i].y);
+         vec2 originPoint = vec2(facePoints[baseIndex + originIndex * 2], facePoints[baseIndex + originIndex * 2 + 1]);
+         vec2 targetPoint = vec2(facePoints[baseIndex + targetIndex * 2], facePoints[baseIndex + targetIndex * 2 + 1]);
+         currentCoordinate = curveWarp(currentCoordinate, originPoint, targetPoint, thinFaceDelta);
+     }
+     return currentCoordinate;
+ }
+
+    // 眼距
+  vec2 yanju(vec2 currentCoordinate, int faceIndex) {
+     int baseIndex = faceIndex * 222;     
+ 
+    vec2 center = vec2(facePoints[baseIndex + 74 * 2], facePoints[baseIndex + 74 * 2 + 1]);
+    vec2 size = vec2(0.1, 0.05);
+    currentCoordinate = rectangleTranslateSmooth(currentCoordinate, center, size, vec2(0.1, 0.0), 1. - thinFaceDelta);
+     return currentCoordinate;
+ }
+
 // 大眼
  vec2 bigEye(vec2 currentCoordinate, int faceIndex) {
      int baseIndex = faceIndex * 222;
@@ -361,7 +457,7 @@ const std::string kGPUPixelThinFaceFragmentShaderString = R"(
 
      for(int i = 0; i < faceCount; i++) {
         //  positionToUse = thinFace(positionToUse, i);
-         positionToUse = shouBi(positionToUse, i);
+         positionToUse = yanju(positionToUse, i);
          positionToUse = bigEye(positionToUse, i);
      }
 

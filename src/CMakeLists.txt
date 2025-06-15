@@ -20,7 +20,6 @@ set(common_source_files
     ${CMAKE_CURRENT_SOURCE_DIR}/sink/sink_raw_data.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/sink/sink_render.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/sink/sink.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/utils/math_toolbox.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/utils/dispatch_queue.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/utils/util.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/filter/contrast_filter.cc
@@ -48,6 +47,7 @@ set(common_source_files
     ${CMAKE_CURRENT_SOURCE_DIR}/filter/color_matrix_filter.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/filter/exposure_filter.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/filter/rgb_filter.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/filter/tiezihi_filter.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/filter/face_makeup_filter.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/filter/hue_filter.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/filter/nearby_sampling3x3_filter.cc
@@ -127,9 +127,6 @@ set(public_sink_header_files
 set(public_objc_sink_header_files
     ${PROJECT_SOURCE_DIR}/include/gpupixel/sink/sink_view.h)
 
-set(public_utils_header_files
-    ${PROJECT_SOURCE_DIR}/include/gpupixel/utils/math_toolbox.h)
-
 set(public_filter_header_files
     ${PROJECT_SOURCE_DIR}/include/gpupixel/filter/gaussian_blur_filter.h
     ${PROJECT_SOURCE_DIR}/include/gpupixel/filter/non_maximum_suppression_filter.h
@@ -202,7 +199,6 @@ set(lib_header_code_files
     ${public_source_header_files}
     ${public_sink_header_files}
     ${public_filter_header_files}
-    ${public_utils_header_files}
     ${internal_core_header_files}
     ${internal_objc_sink_header_files}
     ${internal_utils_header_files})
@@ -256,11 +252,6 @@ if(GPUPIXEL_AAPL_FMWK)
   foreach(hdr ${public_filter_header_files})
     set_source_files_properties(${hdr} PROPERTIES MACOSX_PACKAGE_LOCATION
                                                   Headers/filter)
-  endforeach()
-
-  foreach(hdr ${public_utils_header_files})
-    set_source_files_properties(${hdr} PROPERTIES MACOSX_PACKAGE_LOCATION
-                                                  Headers/utils)
   endforeach()
 
   foreach(image ${lib_image_resource_files})
@@ -324,7 +315,8 @@ elseif(NOT WIN32)
 endif()
 
 if(GPUPIXEL_EXTERNAL_CODE)
-  target_compile_definitions(${gpupixel_libs_name} PRIVATE GPUPIXEL_EXTERNAL_CODE)
+  target_compile_definitions(${gpupixel_libs_name}
+                             PRIVATE GPUPIXEL_EXTERNAL_CODE)
 endif()
 
 if(WIN32)
@@ -375,9 +367,8 @@ endif()
 
 # Library dependencies Linux platform dependencies
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-  target_link_libraries(
-    ${gpupixel_libs_name} PRIVATE GL libyuv::yuv stb::stb
-                                  glad::glad glfw::glfw)
+  target_link_libraries(${gpupixel_libs_name} PRIVATE GL libyuv::yuv stb::stb
+                                                      glad::glad glfw::glfw)
 
   # Windows platform dependencies
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
@@ -399,7 +390,8 @@ elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
             "-framework Metal"
             libyuv::yuv
             stb::stb
-            ghc::filesystem)
+            ghc::filesystem
+            glm::glm)
 
   # iOS platform dependencies
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "iOS")
@@ -417,7 +409,8 @@ elseif(${CMAKE_SYSTEM_NAME} MATCHES "iOS")
             "-framework CoreML"
             libyuv::yuv
             stb::stb
-            ghc::filesystem)
+            ghc::filesystem
+            glm::glm)
 
   # Android platform dependencies
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Android")
@@ -430,10 +423,11 @@ elseif(${CMAKE_SYSTEM_NAME} MATCHES "Android")
             jnigraphics
             libyuv::yuv
             stb::stb
-            ghc::filesystem)
+            ghc::filesystem
+            glm::glm)
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
   target_link_libraries(${gpupixel_libs_name} PRIVATE libyuv::yuv stb::stb
-                                                      ghc::filesystem)
+                                                      ghc::filesystem glm::glm)
 endif()
 
 if(GPUPIXEL_ENABLE_FACE_DETECTOR)

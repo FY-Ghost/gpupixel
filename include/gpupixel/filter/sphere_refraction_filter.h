@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <glm/glm.hpp>
 #include "gpupixel/filter/filter.h"
 #include "gpupixel/gpupixel_define.h"
 
@@ -27,7 +28,7 @@ class GPUPIXEL_API SphereRefractionFilter : public Filter {
 
   // The position about which to apply the distortion, with a default of (0.5,
   // 0.5)
-  Vector2 position_;
+  glm::vec2 position_;
 
   // The radius of the distortion, ranging from 0.0 to 1.0, with a default of
   // 0.25

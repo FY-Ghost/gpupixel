@@ -6,7 +6,9 @@
  */
 
 #include "gpupixel/filter/color_matrix_filter.h"
+#include <glm/gtc/type_ptr.hpp>
 #include "core/gpupixel_context.h"
+
 namespace gpupixel {
 
 #if defined(GPUPIXEL_GLES_SHADER)
@@ -40,7 +42,7 @@ const std::string kColorMatrixFragmentShaderString = R"(
 #endif
 
 ColorMatrixFilter::ColorMatrixFilter()
-    : intensity_factor_(1.0), color_matrix_(Matrix4::IDENTITY) {}
+    : intensity_factor_(1.0), color_matrix_(glm::mat4(1.0f)) {}
 
 std::shared_ptr<ColorMatrixFilter> ColorMatrixFilter::Create() {
   auto ret = std::shared_ptr<ColorMatrixFilter>(new ColorMatrixFilter());

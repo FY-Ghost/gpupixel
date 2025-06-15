@@ -7,10 +7,11 @@
 
 #pragma once
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include "gpupixel/gpupixel_define.h"
 #include "gpupixel/sink/sink.h"
 #include "gpupixel/source/source.h"
-#include "gpupixel/utils/math_toolbox.h"
 
 #include <string>
 #include <vector>

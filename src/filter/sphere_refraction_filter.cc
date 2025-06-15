@@ -6,6 +6,7 @@
  */
 
 #include "gpupixel/filter/sphere_refraction_filter.h"
+#include <glm/glm.hpp>
 #include "core/gpupixel_context.h"
 namespace gpupixel {
 

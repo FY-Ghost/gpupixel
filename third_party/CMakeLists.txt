@@ -175,3 +175,16 @@ add_library(ghc::filesystem ALIAS ghc_filesystem)
 target_include_directories(
   ghc_filesystem
   INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/ghc/include>)
+
+# ---- glm ----
+add_subdirectory(glm-1.0.1/glm EXCLUDE_FROM_ALL)
+
+# GLM is a header-only library, so we use the header-only target
+add_library(glm::glm ALIAS glm-header-only)
+
+target_include_directories(
+  glm-header-only
+  INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/glm-1.0.1>)
+
+# Add GLM_ENABLE_EXPERIMENTAL macro definition
+target_compile_definitions(glm-header-only INTERFACE GLM_ENABLE_EXPERIMENTAL)

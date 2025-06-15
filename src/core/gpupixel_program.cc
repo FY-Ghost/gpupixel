@@ -7,6 +7,7 @@
 
 #include "core/gpupixel_program.h"
 #include <algorithm>
+#include <glm/gtc/type_ptr.hpp>
 #include "core/gpupixel_context.h"
 #include "utils/util.h"
 
@@ -149,19 +150,19 @@ void GPUPixelGLProgram::SetUniformValue(const std::string& uniform_name,
 }
 
 void GPUPixelGLProgram::SetUniformValue(const std::string& uniform_name,
-                                        Matrix4 value) {
+                                        glm::mat4 value) {
   GPUPixelContext::GetInstance()->SetActiveGlProgram(this);
   SetUniformValue(GetUniformLocation(uniform_name), value);
 }
 
 void GPUPixelGLProgram::SetUniformValue(const std::string& uniform_name,
-                                        Vector2 value) {
+                                        glm::vec2 value) {
   GPUPixelContext::GetInstance()->SetActiveGlProgram(this);
   SetUniformValue(GetUniformLocation(uniform_name), value);
 }
 
 void GPUPixelGLProgram::SetUniformValue(const std::string& uniform_name,
-                                        Matrix3 value) {
+                                        glm::mat3 value) {
   GPUPixelContext::GetInstance()->SetActiveGlProgram(this);
   SetUniformValue(GetUniformLocation(uniform_name), value);
 }
@@ -183,19 +184,21 @@ void GPUPixelGLProgram::SetUniformValue(int uniform_location, float value) {
   GL_CALL(glUniform1f(uniform_location, value));
 }
 
-void GPUPixelGLProgram::SetUniformValue(int uniform_location, Matrix4 value) {
+void GPUPixelGLProgram::SetUniformValue(int uniform_location, glm::mat4 value) {
   GPUPixelContext::GetInstance()->SetActiveGlProgram(this);
-  GL_CALL(glUniformMatrix4fv(uniform_location, 1, GL_FALSE, (float*)&value));
+  GL_CALL(
+      glUniformMatrix4fv(uniform_location, 1, GL_FALSE, glm::value_ptr(value)));
 }
 
-void GPUPixelGLProgram::SetUniformValue(int uniform_location, Vector2 value) {
+void GPUPixelGLProgram::SetUniformValue(int uniform_location, glm::vec2 value) {
   GPUPixelContext::GetInstance()->SetActiveGlProgram(this);
   GL_CALL(glUniform2f(uniform_location, value.x, value.y));
 }
 
-void GPUPixelGLProgram::SetUniformValue(int uniform_location, Matrix3 value) {
+void GPUPixelGLProgram::SetUniformValue(int uniform_location, glm::mat3 value) {
   GPUPixelContext::GetInstance()->SetActiveGlProgram(this);
-  GL_CALL(glUniformMatrix3fv(uniform_location, 1, GL_FALSE, (float*)&value));
+  GL_CALL(
+      glUniformMatrix3fv(uniform_location, 1, GL_FALSE, glm::value_ptr(value)));
 }
 
 void GPUPixelGLProgram::SetUniformValue(int uniform_location,

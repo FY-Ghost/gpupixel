@@ -6,7 +6,9 @@
  */
 
 #include "gpupixel/filter/convolution3x3_filter.h"
+#include <glm/glm.hpp>
 #include "core/gpupixel_context.h"
+
 namespace gpupixel {
 
 #if defined(GPUPIXEL_GLES_SHADER)
@@ -102,7 +104,8 @@ bool Convolution3x3Filter::Init() {
     return false;
   }
 
-  convolution_kernel_.set(0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f);
+  // Initialize with identity matrix
+  convolution_kernel_ = glm::mat3(0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f);
 
   return true;
 }

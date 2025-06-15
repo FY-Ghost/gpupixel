@@ -6,6 +6,8 @@
  */
 
 #include "gpupixel/filter/hsb_filter.h"
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include "core/gpupixel_context.h"
 namespace gpupixel {
 
@@ -48,7 +50,7 @@ bool HSBFilter::Init() {
 }
 
 void HSBFilter::reset() {
-  setColorMatrix(Matrix4::IDENTITY);
+  setColorMatrix(glm::mat4(1.0f));
 }
 
 void HSBFilter::rotateHue(float h) {
@@ -56,40 +58,40 @@ void HSBFilter::rotateHue(float h) {
 }
 
 void HSBFilter::adjustSaturation(float sat) {
-  Matrix4 sMat;
+  glm::mat4 sMat(1.0f);
   float rwgt = RLUM;
   float gwgt = GLUM;
   float bwgt = BLUM;
 
-  sMat.m[0] = (1.0 - sat) * rwgt + sat;
-  sMat.m[1] = (1.0 - sat) * rwgt;
-  sMat.m[2] = (1.0 - sat) * rwgt;
-  sMat.m[3] = 0.0;
-  sMat.m[4] = (1.0 - sat) * gwgt;
-  sMat.m[5] = (1.0 - sat) * gwgt + sat;
-  sMat.m[6] = (1.0 - sat) * gwgt;
-  sMat.m[7] = 0.0;
-  sMat.m[8] = (1.0 - sat) * bwgt;
-  sMat.m[9] = (1.0 - sat) * bwgt;
-  sMat.m[10] = (1.0 - sat) * bwgt + sat;
-  sMat.m[11] = 0.0;
-  sMat.m[12] = 0.0;
-  sMat.m[13] = 0.0;
-  sMat.m[14] = 0.0;
-  sMat.m[15] = 1.0;
+  sMat[0][0] = (1.0 - sat) * rwgt + sat;
+  sMat[0][1] = (1.0 - sat) * rwgt;
+  sMat[0][2] = (1.0 - sat) * rwgt;
+  sMat[0][3] = 0.0;
+  sMat[1][0] = (1.0 - sat) * gwgt;
+  sMat[1][1] = (1.0 - sat) * gwgt + sat;
+  sMat[1][2] = (1.0 - sat) * gwgt;
+  sMat[1][3] = 0.0;
+  sMat[2][0] = (1.0 - sat) * bwgt;
+  sMat[2][1] = (1.0 - sat) * bwgt;
+  sMat[2][2] = (1.0 - sat) * bwgt + sat;
+  sMat[2][3] = 0.0;
+  sMat[3][0] = 0.0;
+  sMat[3][1] = 0.0;
+  sMat[3][2] = 0.0;
+  sMat[3][3] = 1.0;
 
   saturation_matrix_ = sMat;
 
-  color_matrix_ = Matrix4::IDENTITY;
+  color_matrix_ = glm::mat4(1.0f);
   color_matrix_ *= brightness_matrix_;
   color_matrix_ = saturation_matrix_ * color_matrix_;
 }
 
 void HSBFilter::adjustBrightness(float b) {
-  brightness_matrix_ = Matrix4::IDENTITY;
+  brightness_matrix_ = glm::mat4(1.0f);
   brightness_matrix_ *= b;
 
-  color_matrix_ = Matrix4::IDENTITY;
+  color_matrix_ = glm::mat4(1.0f);
   color_matrix_ *= brightness_matrix_;
   color_matrix_ = saturation_matrix_ * color_matrix_;
 }

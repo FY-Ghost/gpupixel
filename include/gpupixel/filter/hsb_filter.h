@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <glm/glm.hpp>
 #include "gpupixel/filter/color_matrix_filter.h"
 #include "gpupixel/gpupixel_define.h"
 
@@ -45,8 +46,8 @@ class GPUPIXEL_API HSBFilter : public ColorMatrixFilter {
   HSBFilter() {};
 
  private:
-  Matrix4 brightness_matrix_;
-  Matrix4 saturation_matrix_;
+  glm::mat4 brightness_matrix_;
+  glm::mat4 saturation_matrix_;
 };
 
 }  // namespace gpupixel

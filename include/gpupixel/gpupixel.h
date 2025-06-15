@@ -9,8 +9,6 @@
 
 // core
 #include "gpupixel/gpupixel_define.h"
-// utils
-#include "gpupixel/utils/math_toolbox.h"
 
 // source
 #include "gpupixel/source/source.h"
@@ -74,6 +72,7 @@
 #include "gpupixel/filter/smooth_toon_filter.h"
 #include "gpupixel/filter/sobel_edge_detection_filter.h"
 #include "gpupixel/filter/sphere_refraction_filter.h"
+#include "gpupixel/filter/tiezihi_filter.h"
 #include "gpupixel/filter/toon_filter.h"
 #include "gpupixel/filter/weak_pixel_inclusion_filter.h"
 #include "gpupixel/filter/white_balance_filter.h"

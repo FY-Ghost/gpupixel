@@ -31,7 +31,6 @@ option(GPUPIXEL_EXTERNAL_CODE "Build with external code" OFF)
 
 option(GPUPIXEL_INSTALL "Generate the install target" ON)
 
-
 # ---- Platform detection ----
 # Identify the current operating system
 if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Linux"

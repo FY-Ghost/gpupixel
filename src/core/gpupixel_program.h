@@ -7,10 +7,11 @@
 
 #pragma once
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include <string>
 #include <vector>
 #include "core/gpupixel_gl_include.h"
-#include "gpupixel/utils/math_toolbox.h"
 
 namespace gpupixel {
 class GPUPIXEL_API GPUPixelGLProgram {
@@ -29,9 +30,9 @@ class GPUPIXEL_API GPUPixelGLProgram {
 
   void SetUniformValue(const std::string& uniform_name, int value);
   void SetUniformValue(const std::string& uniform_name, float value);
-  void SetUniformValue(const std::string& uniform_name, Vector2 value);
-  void SetUniformValue(const std::string& uniform_name, Matrix3 value);
-  void SetUniformValue(const std::string& uniform_name, Matrix4 value);
+  void SetUniformValue(const std::string& uniform_name, glm::vec2 value);
+  void SetUniformValue(const std::string& uniform_name, glm::mat3 value);
+  void SetUniformValue(const std::string& uniform_name, glm::mat4 value);
 
   void SetUniformValue(const std::string& uniform_name,
                        const void* array,
@@ -39,9 +40,9 @@ class GPUPIXEL_API GPUPixelGLProgram {
 
   void SetUniformValue(int uniform_location, int value);
   void SetUniformValue(int uniform_location, float value);
-  void SetUniformValue(int uniform_location, Vector2 value);
-  void SetUniformValue(int uniform_location, Matrix3 value);
-  void SetUniformValue(int uniform_location, Matrix4 value);
+  void SetUniformValue(int uniform_location, glm::vec2 value);
+  void SetUniformValue(int uniform_location, glm::mat3 value);
+  void SetUniformValue(int uniform_location, glm::mat4 value);
   void SetUniformValue(int uniform_location, const void* array, int length);
 
  private:
