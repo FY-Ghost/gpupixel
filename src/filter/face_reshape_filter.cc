@@ -136,6 +136,7 @@ const std::string kGPUPixelThinFaceFragmentShaderString = R"(
      }
  }
 
+
  // 带平滑边缘的矩形区域像素平移函数  
  vec2 rectangleTranslateSmooth(vec2 textureCoord, vec2 rectCenter, vec2 rectSize, vec2 translateOffset, float smoothEdge) {
      // 计算到矩形中心的相对坐标
@@ -153,38 +154,65 @@ const std::string kGPUPixelThinFaceFragmentShaderString = R"(
      // 应用加权的平移偏移
      return textureCoord + translateOffset * weight;
  }
-
- // 使用4个顶点定义的任意四边形平移函数
- vec2 quadTranslate(vec2 textureCoord, vec2 p1, vec2 p2, vec2 p3, vec2 p4, vec2 translateOffset) {
-     // 简化的点在四边形内判断（适用于凸四边形）
-     // 使用叉积判断点是否在四边形内部
-     vec2 v1 = p2 - p1;
-     vec2 v2 = p3 - p2; 
-     vec2 v3 = p4 - p3;
-     vec2 v4 = p1 - p4;
+ 
+ // 改进方案1：使用高斯函数的椭圆形区域平移（推荐用于嘴巴）
+ vec2 ellipseTranslateGaussian(vec2 textureCoord, vec2 center, vec2 size, vec2 translateOffset, float intensity) {
+     // 计算标准化距离
+     vec2 relativePos = (textureCoord - center) / size;
+     float distance = length(relativePos);
      
-     vec2 vp1 = textureCoord - p1;
-     vec2 vp2 = textureCoord - p2;
-     vec2 vp3 = textureCoord - p3;
-     vec2 vp4 = textureCoord - p4;
+     // 使用高斯函数计算权重，产生更自然的过渡
+     float weight = exp(-distance * distance * 4.0) * intensity;
+     weight = clamp(weight, 0.0, 1.0);
      
-     // 计算叉积
-     float cross1 = v1.x * vp1.y - v1.y * vp1.x;
-     float cross2 = v2.x * vp2.y - v2.y * vp2.x;
-     float cross3 = v3.x * vp3.y - v3.y * vp3.x;
-     float cross4 = v4.x * vp4.y - v4.y * vp4.x;
-     
-     // 检查所有叉积是否同号（在四边形内）
-     bool inQuad = (cross1 >= 0.0 && cross2 >= 0.0 && cross3 >= 0.0 && cross4 >= 0.0) ||
-                   (cross1 <= 0.0 && cross2 <= 0.0 && cross3 <= 0.0 && cross4 <= 0.0);
-     
-     if (inQuad) {
-         return textureCoord + translateOffset;
-     } else {
-         return textureCoord;
-     }
+     return textureCoord + translateOffset * weight;
  }
  
+ // 改进方案2：使用cosine插值的圆形区域平移
+ vec2 circleTranslateCosine(vec2 textureCoord, vec2 center, float radius, vec2 translateOffset, float intensity) {
+     float dist = distance(textureCoord, center);
+     
+     if (dist > radius) {
+         return textureCoord;
+     }
+     
+     // 使用cosine插值产生S型曲线过渡
+     float normalizedDist = dist / radius;
+     float weight = 0.5 * (1.0 + cos(3.14159 * normalizedDist)) * intensity;
+     weight = clamp(weight, 0.0, 1.0);
+     
+     return textureCoord + translateOffset * weight;
+ }
+ 
+ // 改进方案3：多层次衰减的椭圆形平移（最自然的效果）
+ vec2 ellipseTranslateMultiLayer(vec2 textureCoord, vec2 center, vec2 size, vec2 translateOffset, float intensity) {
+     vec2 relativePos = textureCoord - center;
+     vec2 normalizedPos = relativePos / size;
+     float ellipseDist = length(normalizedPos);
+     
+     if (ellipseDist > 1.0) {
+         return textureCoord;
+     }
+     
+     // 多层次衰减：内核区域+过渡区域+边缘区域
+     float weight = 0.0;
+     if (ellipseDist < 0.3) {
+         // 内核区域：几乎完全平移
+         weight = intensity * 0.95;
+     } else if (ellipseDist < 0.7) {
+         // 主要过渡区域：smooth衰减
+         float t = (ellipseDist - 0.3) / 0.4;
+         weight = intensity * (0.95 - 0.7 * smoothstep(0.0, 1.0, t));
+     } else {
+         // 边缘过渡区域：快速衰减到0
+         float t = (ellipseDist - 0.7) / 0.3;
+         weight = intensity * 0.25 * (1.0 - smoothstep(0.0, 1.0, t));
+     }
+     
+     weight = clamp(weight, 0.0, 1.0);
+     return textureCoord + translateOffset * weight;
+ }
+
  vec2 enlargeEye(vec2 textureCoord, vec2 originPosition, float radius, float delta) {
 
      float weight = distance(vec2(textureCoord.x, textureCoord.y / aspectRatio), vec2(originPosition.x, originPosition.y / aspectRatio)) / radius;
@@ -418,16 +446,43 @@ const std::string kGPUPixelThinFaceFragmentShaderString = R"(
      return currentCoordinate;
  }
 
-    // 眼距
+    // 眼距调整 - 使用改进的椭圆形平移函数
   vec2 yanju(vec2 currentCoordinate, int faceIndex) {
      int baseIndex = faceIndex * 222;     
- 
-    vec2 center = vec2(facePoints[baseIndex + 74 * 2], facePoints[baseIndex + 74 * 2 + 1]);
-    vec2 size = vec2(0.1, 0.05);
-    currentCoordinate = rectangleTranslateSmooth(currentCoordinate, center, size, vec2(0.1, 0.0), 1. - thinFaceDelta);
-     return currentCoordinate;
+    
+    // left eye - 使用椭圆形高斯平移
+    vec2 leftCenter = vec2(facePoints[baseIndex + 74 * 2], facePoints[baseIndex + 74 * 2 + 1]);
+    vec2 eyeSize = vec2(0.08, 0.04);  // 缩小影响区域
+    currentCoordinate = ellipseTranslateGaussian(currentCoordinate, leftCenter, eyeSize, vec2(0.15, 0.0), thinFaceDelta);
+    
+    // right eye - 使用椭圆形高斯平移
+    vec2 rightCenter = vec2(facePoints[baseIndex + 77 * 2], facePoints[baseIndex + 77 * 2 + 1]);
+    currentCoordinate = ellipseTranslateGaussian(currentCoordinate, rightCenter, eyeSize, vec2(-0.15, 0.0), thinFaceDelta);
+    
+    return currentCoordinate;
  }
 
+ // 嘴巴位置调整 - 使用改进的椭圆形平移函数
+ vec2 zuiba_position(vec2 currentCoordinate, int faceIndex) {
+     int baseIndex = faceIndex * 222;     
+ 
+    vec2 center = vec2(facePoints[baseIndex + 93 * 2], facePoints[baseIndex + 93 * 2 + 1]);
+    
+    // 方案1：使用高斯椭圆形平移（推荐）
+    // vec2 size = vec2(0.1, 0.1);  // 稍微缩小影响区域
+    // currentCoordinate = ellipseTranslateGaussian(currentCoordinate, center, size, vec2(0.0, -0.15), thinFaceDelta);
+    
+         // 方案2：使用多层次椭圆形平移（最自然，可选）
+     vec2 size = vec2(0.15, 0.12);  // 微调椭圆大小以配合93号landmark
+     currentCoordinate = ellipseTranslateMultiLayer(currentCoordinate, center, size, vec2(0.0, -0.10), thinFaceDelta);
+    
+    // 方案3：使用圆形cosine平移（简单有效，可选）
+    // float radius = 0.08;
+    // currentCoordinate = circleTranslateCosine(currentCoordinate, center, radius, vec2(0.0, -0.12), thinFaceDelta);
+ 
+    return currentCoordinate;
+ }
+ 
 // 大眼
  vec2 bigEye(vec2 currentCoordinate, int faceIndex) {
      int baseIndex = faceIndex * 222;
@@ -457,7 +512,7 @@ const std::string kGPUPixelThinFaceFragmentShaderString = R"(
 
      for(int i = 0; i < faceCount; i++) {
         //  positionToUse = thinFace(positionToUse, i);
-         positionToUse = yanju(positionToUse, i);
+         positionToUse = zuiba_position(positionToUse, i);
          positionToUse = bigEye(positionToUse, i);
      }
 
